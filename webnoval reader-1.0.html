@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Novel Text-to-Speech</title>
+</head>
+<body>
+    <h1>Web Novel Text-to-Speech</h1>
+    <textarea id="textInput" placeholder="Paste text here..." rows="10" cols="50"></textarea>
+    <br>
+    <button id="playButton">Play Text</button>
+    <button id="downloadButton">Download MP3</button>
+
+    <script src="server.js"></script>
+
+    <script>
+        // Text-to-Speech setup
+        const synth = window.speechSynthesis;
+
+        // Function to play text
+        function playText() {
+            const text = document.getElementById('textInput').value;
+            if (!text) {
+                alert('Please enter text to play.');
+                return;
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = synth.getVoices().find(voice => voice.name.includes('Male')) || synth.getVoices()[0];
+            utterance.pitch = 1;
+            utterance.rate = 1;
+            synth.speak(utterance);
+        }
+
+        // Function to download text as MP3
+        async function downloadMP3() {
+            const text = document.getElementById('textInput').value;
+            if (!text) {
+                alert('Please enter text to download.');
+                return;
+            }
+
+            const response = await fetch('/synthesize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text }),
+            });
+
+            if (!response.ok) {
+                alert('Failed to generate MP3. Please check your API setup.');
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'narration.mp3';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.getElementById('playButton').addEventListener('click', playText);
+        document.getElementById('downloadButton').addEventListener('click', downloadMP3);
+    </script>
+</body>
+</html>
